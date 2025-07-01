@@ -18,24 +18,25 @@ The ragdoll that is spawned is specified separately, but by default it follows t
 
 #### Inside:
 
-| Enemy                     | Causes of death       | Player ragdolls |
-|---------------------------|-----------------------|-----------------|
-| Hoarding bug              | Mauling               | Normal          |
-| Nutcracker                | Gunshots _or_ Kicking | Normal          |
-| Butler _and_ Mask Hornets | Stabbing              | Normal          |
-| Coil head                 | Mauling               | Spring          |
-| Snare flea                | Suffocation           | Normal          |
-| Thumper                   | Mauling               | Normal          |
-| Hygrodere                 | Unknown               | _Special_       |
-| Spore Lizard              | Mauling               | Normal          |
-| Barber                    | Snipped               | Sliced          |
-| Bracken                   | Strangulation         | Normal          |
-| Bunker Spider             | Mauling               | _Special_       |
-| Ghost Girl                | Unknown               | HeadBurst       |
-| Jester                    | Mauling               | Normal          |
-| Maneater                  | Mauling               | Normal          |
-| Kidnapper Fox _(Unused)_  | Mauling               | HeadGone        |
-| Lasso Man _(Unused)_      | Strangulation         | Normal          |
+| Enemy                     | Causes of death       | Player ragdolls        |
+|---------------------------|-----------------------|------------------------|
+| Hoarding bug              | Mauling               | Normal                 |
+| Masked                    | Strangulation         | _Special_ (ComedyMask) |
+| Nutcracker                | Gunshots _or_ Kicking | Normal                 |
+| Butler _and_ Mask Hornets | Stabbing              | Normal                 |
+| Coil head                 | Mauling               | Spring                 |
+| Snare flea                | Suffocation           | Normal                 |
+| Thumper                   | Mauling               | Normal                 |
+| Hygrodere                 | Unknown               | _Special_ (Normal)     |
+| Spore Lizard              | Mauling               | Normal                 |
+| Barber                    | Snipped               | Sliced                 |
+| Bracken                   | Strangulation         | Normal                 |
+| Bunker Spider             | Mauling               | _Special_ (Normal)     |
+| Ghost Girl                | Unknown               | HeadBurst              |
+| Jester                    | Mauling               | Normal                 |
+| Maneater                  | Mauling               | Normal                 |
+| Kidnapper Fox _(Unused)_  | Mauling               | HeadGone               |
+| Lasso Man _(Unused)_      | Strangulation         | Normal                 |
 
 #### Outside (Night):
 
@@ -56,18 +57,18 @@ The ragdoll that is spawned is specified separately, but by default it follows t
 
 #### Other game elements:
 
-| Game element              | Causes of death              | Player ragdolls   |
-|---------------------------|------------------------------|-------------------|
-| Fan (Factory entrance)    | Fan                          | HeadBurst         |
-| Water                     | Drowning                     | Normal            |
-| Quicksand (Rainy Puddles) | Suffocation                  | None              |
-| Players (Friendly Fire)   | Bludgeoning                  | _Special_         |
-| Fall Damage               | Gravity                      | Normal            |
-| Landmines                 | Blast                        | Normal            |
-| Turrets                   | Gunshots                     | Normal            |
-| Trap                      | Crushing                     | Normal            |
-| Cruiser                   | Blast, Crushing _or_ Inertia | Burnt _or_ Normal |
-| Jetpack                   | Gravity _or_ Blast           | Normal            |
-| Out of bounds             | Unknown                      | None              |
+| Game element              | Causes of death              | Player ragdolls    |
+|---------------------------|------------------------------|--------------------|
+| Fan (Factory entrance)    | Fan                          | HeadBurst          |
+| Water                     | Drowning                     | Normal             |
+| Quicksand (Rainy Puddles) | Suffocation                  | None               |
+| Players (Friendly Fire)   | Bludgeoning                  | _Special_ (Normal) |
+| Fall Damage               | Gravity                      | Normal             |
+| Landmines                 | Blast                        | Normal             |
+| Turrets                   | Gunshots                     | Normal             |
+| Trap                      | Crushing                     | Normal             |
+| Cruiser                   | Blast, Crushing _or_ Inertia | Burnt _or_ Normal  |
+| Jetpack                   | Gravity _or_ Blast           | Normal             |
+| Out of bounds             | Unknown                      | None               |
 
 **Note: Special ragdolls are not supported**
