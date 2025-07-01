@@ -1,4 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection.Emit;
 using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using GameNetcodeStuff;
 using HarmonyLib;
@@ -11,8 +16,9 @@ namespace KillBind;
 
 public class KeyBindings : LcInputActions
 {
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global
     [InputAction(KeyboardControl.K, Name = "Kill bind")]
-    public InputAction KillKey { get; private set; } = null!;
+    public InputAction KillKey { get; set; } = null!;
 }
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
@@ -23,227 +29,123 @@ public class KillBind : BaseUnityPlugin
     internal static new ManualLogSource Logger { get; private set; } = null!;
     internal static Harmony? Harmony { get; set; }
 
-    internal static readonly KeyBindings keyBindings = new KeyBindings();
+    internal static readonly KeyBindings keyBindings = new();
+
+    private ConfigEntry<CauseOfDeath> _causeOfDeath = null!;
+    public CauseOfDeath causeOfDeath => _causeOfDeath.Value;
+
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    public enum DeathAnimation
+    {
+        None = -1,
+        Normal,
+        HeadBurst,
+        Spring,
+        Electrocuted,
+        ComedyMask,
+        TragedyMask,
+        Burnt,
+        Sliced,
+        HeadGone,
+        Pieces,
+    }
+
+    private ConfigEntry<DeathAnimation> _deathAnimation = null!;
+    public DeathAnimation deathAnimation =>
+        _deathAnimation.Value == DeathAnimation.None
+            ? causeOfDeath switch
+            {
+                CauseOfDeath.Unknown => DeathAnimation.HeadBurst,
+                CauseOfDeath.Electrocution => DeathAnimation.Electrocuted,
+                CauseOfDeath.Burning => DeathAnimation.Burnt,
+                CauseOfDeath.Fan => DeathAnimation.HeadBurst,
+                CauseOfDeath.Snipped => DeathAnimation.Sliced,
+                _ => DeathAnimation.Normal,
+            }
+            : _deathAnimation.Value;
+
+    internal static Vector3 _BodyVelocity { get; set; } = default;
 
     private void Awake()
     {
         Logger = base.Logger;
         Instance = this;
 
-        Patch();
+        _causeOfDeath = Config.Bind(
+            "General",
+            "CauseOfDeath",
+            CauseOfDeath.Unknown,
+            "What cause of death to display for your corpse"
+        );
+        _deathAnimation = Config.Bind(
+            "General",
+            "DeathAnimation",
+            DeathAnimation.None,
+            "What ragdoll to spawn (None chooses automatically based on cause of death)"
+        );
+
+        Harmony ??= new Harmony(MyPluginInfo.PLUGIN_GUID);
+        Logger.LogDebug("Patching...");
+        Harmony.PatchAll();
+        Logger.LogDebug("Finished patching!");
+
+        keyBindings.KillKey.performed += KillBind_performed;
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
     }
 
+    private static void KillBind_performed(InputAction.CallbackContext ctx)
+    {
+        if (
+            !ctx.performed
+            || GameNetworkManager.Instance.localPlayerController == null
+            || GameNetworkManager.Instance.localPlayerController.isPlayerDead
+        )
+            return;
+
+        GameNetworkManager.Instance.localPlayerController.KillPlayer(
+            _BodyVelocity,
+            true,
+            Instance.causeOfDeath,
+            Math.Clamp(
+                (int)Instance.deathAnimation,
+                0,
+                GameNetworkManager
+                    .Instance
+                    .localPlayerController
+                    .playersManager
+                    .playerRagdolls
+                    .Count - 1
+            )
+        );
+    }
+
     [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.Update))]
-    public class UpdatePatch
+    internal class UpdatePatch
     {
-        public static void Postfix(ref PlayerControllerB __instance)
-        {
-            if (!keyBindings.KillKey.triggered)
-                return;
-            if (
-                (
-                    !__instance.IsOwner
-                    || !__instance.isPlayerControlled
-                    || __instance is { IsServer: true, isHostPlayerObject: false }
-                ) && !__instance.isTestingPlayer
-            )
-                return;
-
-            if (
-                __instance is not { inTerminalMenu: false, isTypingChat: false }
-                || !Application.isFocused
-            )
-                return;
-
-            float num3 = __instance.movementSpeed / __instance.carryWeight;
-            if (__instance.sinkingValue > 0.73f)
-            {
-                num3 = 0f;
-            }
-            else
-            {
-                if (__instance.isCrouching)
-                {
-                    num3 /= 1.5f;
-                }
-                else if (__instance.criticallyInjured && !__instance.isCrouching)
-                {
-                    num3 *= __instance.limpMultiplier;
-                }
-
-                if (__instance.isSpeedCheating)
-                {
-                    num3 *= 15f;
-                }
-
-                if (__instance.movementHinderedPrev > 0)
-                {
-                    num3 /= 2f * __instance.hinderedMultiplier;
-                }
-
-                if (__instance.drunkness > 0f)
-                {
-                    num3 *=
-                        StartOfRound.Instance.drunknessSpeedEffect.Evaluate(__instance.drunkness)
-                            / 5f
-                        + 1f;
-                }
-
-                if (!__instance.isCrouching && __instance.crouchMeter > 1.2f)
-                {
-                    num3 *= 0.5f;
-                }
-
-                if (!__instance.isCrouching)
-                {
-                    float num4 = Vector3.Dot(__instance.playerGroundNormal, __instance.walkForce);
-                    if (num4 > 0.05f)
-                    {
-                        __instance.slopeModifier = Mathf.MoveTowards(
-                            __instance.slopeModifier,
-                            num4,
-                            (__instance.slopeModifierSpeed + 0.45f) * Time.deltaTime
-                        );
-                    }
-                    else
-                    {
-                        __instance.slopeModifier = Mathf.MoveTowards(
-                            __instance.slopeModifier,
-                            num4,
-                            __instance.slopeModifierSpeed / 2f * Time.deltaTime
-                        );
-                    }
-
-                    num3 = Mathf.Max(
-                        num3 * 0.8f,
-                        num3 + __instance.slopeIntensity * __instance.slopeModifier
-                    );
-                }
-            }
-
-            Vector3 vector3 = new Vector3(0f, 0f, 0f);
-            int num5 = Physics.OverlapSphereNonAlloc(
-                __instance.transform.position,
-                0.65f,
-                __instance.nearByPlayers,
-                StartOfRound.Instance.playersMask
-            );
-            for (int i = 0; i < num5; i++)
-            {
-                vector3 +=
-                    Vector3.Normalize(
-                        (
-                            __instance.transform.position
-                            - __instance.nearByPlayers[i].transform.position
-                        ) * 100f
-                    ) * 1.2f;
-            }
-            int num6 = Physics.OverlapSphereNonAlloc(
-                __instance.transform.position,
-                1.25f,
-                __instance.nearByPlayers,
-                524288
-            );
-            for (int j = 0; j < num6; j++)
-            {
-                EnemyAICollisionDetect component = __instance
-                    .nearByPlayers[j]
-                    .gameObject.GetComponent<EnemyAICollisionDetect>();
-                if (
-                    component != null
-                    && component.mainScript != null
-                    && !component.mainScript.isEnemyDead
-                    && Vector3.Distance(
-                        __instance.transform.position,
-                        __instance.nearByPlayers[j].transform.position
-                    ) < component.mainScript.enemyType.pushPlayerDistance
-                )
-                {
-                    vector3 +=
-                        Vector3.Normalize(
-                            (
-                                __instance.transform.position
-                                - __instance.nearByPlayers[j].transform.position
-                            ) * 100f
-                        ) * component.mainScript.enemyType.pushPlayerForce;
-                }
-            }
-            __instance.walkForce = Vector3.MoveTowards(
-                maxDistanceDelta: (
-                    (__instance.isFallingFromJump || __instance.isFallingNoJump)
-                        ? 1.33f
-                        : (
-                            (__instance.drunkness > 0.3f)
-                                ? Mathf.Clamp(Mathf.Abs(__instance.drunkness - 2.25f), 0.3f, 2.5f)
-                                : (
-                                    (!__instance.isCrouching && __instance.crouchMeter > 1f)
-                                        ? 15f
-                                        : (
-                                            (!__instance.isSprinting)
-                                                ? (10f / __instance.carryWeight)
-                                                : (5f / (__instance.carryWeight * 1.5f))
-                                        )
-                                )
+        // ReSharper disable once UnusedMember.Local
+        private static IEnumerable<CodeInstruction> Transpiler(
+            IEnumerable<CodeInstruction> instructions
+        ) =>
+            new CodeMatcher(instructions)
+                .MatchForward(
+                    false,
+                    new CodeMatch(
+                        OpCodes.Callvirt,
+                        AccessTools.Method(
+                            typeof(CharacterController),
+                            nameof(CharacterController.Move)
                         )
-                ) * Time.deltaTime,
-                current: __instance.walkForce,
-                target: __instance.transform.right * __instance.moveInputVector.x
-                    + __instance.transform.forward * __instance.moveInputVector.y
-            );
-            Vector3 vector4 = __instance.walkForce * num3 * __instance.sprintMultiplier + vector3;
-            vector4 += __instance.externalForces;
-            if (__instance.externalForceAutoFade.magnitude > 0.05f)
-            {
-                vector4 += __instance.externalForceAutoFade;
-            }
-            if (__instance.isPlayerSliding && __instance.thisController.isGrounded)
-            {
-                __instance.playerSlidingTimer += Time.deltaTime;
-                if (__instance.slideFriction > __instance.maxSlideFriction)
-                {
-                    __instance.slideFriction -= 35f * Time.deltaTime;
-                }
-                vector4 = new Vector3(
-                    vector4.x
-                        + (1f - __instance.playerGroundNormal.y)
-                            * __instance.playerGroundNormal.x
-                            * (1f - __instance.slideFriction),
-                    vector4.y,
-                    vector4.z
-                        + (1f - __instance.playerGroundNormal.y)
-                            * __instance.playerGroundNormal.z
-                            * (1f - __instance.slideFriction)
-                );
-            }
-            else
-            {
-                __instance.playerSlidingTimer = 0f;
-                __instance.slideFriction = 0f;
-            }
-            Logger.LogInfo($">> KillPlayer({vector4.ToString()})");
-            __instance.KillPlayer(vector4);
-        }
-    }
-
-    internal static void Patch()
-    {
-        Harmony ??= new Harmony(MyPluginInfo.PLUGIN_GUID);
-
-        Logger.LogDebug("Patching...");
-
-        Harmony.PatchAll();
-
-        Logger.LogDebug("Finished patching!");
-    }
-
-    internal static void Unpatch()
-    {
-        Logger.LogDebug("Unpatching...");
-
-        Harmony?.UnpatchSelf();
-
-        Logger.LogDebug("Finished unpatching!");
+                    )
+                )
+                .Advance(-2)
+                .Insert(
+                    new CodeInstruction(OpCodes.Dup),
+                    new CodeInstruction(
+                        OpCodes.Call,
+                        AccessTools.PropertySetter(typeof(KillBind), nameof(_BodyVelocity))
+                    )
+                )
+                .InstructionEnumeration();
     }
 }
