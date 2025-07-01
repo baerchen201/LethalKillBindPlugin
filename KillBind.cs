@@ -37,6 +37,7 @@ public class KillBind : BaseUnityPlugin
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public enum DeathAnimation
     {
+        CauseOfDeath = -2,
         None = -1,
         Normal,
         HeadBurst,
@@ -51,9 +52,10 @@ public class KillBind : BaseUnityPlugin
     }
 
     private ConfigEntry<DeathAnimation> _deathAnimation = null!;
-    public DeathAnimation deathAnimation =>
-        _deathAnimation.Value == DeathAnimation.None
-            ? causeOfDeath switch
+    public DeathAnimation? deathAnimation =>
+        _deathAnimation.Value switch
+        {
+            DeathAnimation.CauseOfDeath => causeOfDeath switch
             {
                 CauseOfDeath.Unknown => DeathAnimation.HeadBurst,
                 CauseOfDeath.Electrocution => DeathAnimation.Electrocuted,
@@ -61,8 +63,10 @@ public class KillBind : BaseUnityPlugin
                 CauseOfDeath.Fan => DeathAnimation.HeadBurst,
                 CauseOfDeath.Snipped => DeathAnimation.Sliced,
                 _ => DeathAnimation.Normal,
-            }
-            : _deathAnimation.Value;
+            },
+            DeathAnimation.None => null,
+            _ => _deathAnimation.Value,
+        };
 
     internal static Vector3 _BodyVelocity { get; set; } = default;
 
@@ -80,8 +84,8 @@ public class KillBind : BaseUnityPlugin
         _deathAnimation = Config.Bind(
             "General",
             "DeathAnimation",
-            DeathAnimation.None,
-            "What ragdoll to spawn (None chooses automatically based on cause of death)"
+            DeathAnimation.CauseOfDeath,
+            "What ragdoll to spawn (CauseOfDeath chooses automatically based on cause of death)"
         );
 
         Harmony ??= new Harmony(MyPluginInfo.PLUGIN_GUID);
@@ -103,12 +107,13 @@ public class KillBind : BaseUnityPlugin
         )
             return;
 
+        var deathAnimation = Instance.deathAnimation;
         GameNetworkManager.Instance.localPlayerController.KillPlayer(
             _BodyVelocity,
-            true,
+            deathAnimation != null,
             Instance.causeOfDeath,
             Math.Clamp(
-                (int)Instance.deathAnimation,
+                (int)(deathAnimation ?? DeathAnimation.Normal),
                 0,
                 GameNetworkManager
                     .Instance
