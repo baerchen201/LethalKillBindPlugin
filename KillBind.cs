@@ -104,6 +104,8 @@ public class KillBind : BaseUnityPlugin
             !ctx.performed
             || GameNetworkManager.Instance.localPlayerController == null
             || GameNetworkManager.Instance.localPlayerController.isPlayerDead
+            || GameNetworkManager.Instance.localPlayerController.isTypingChat
+            || GameNetworkManager.Instance.localPlayerController.quickMenuManager.isMenuOpen
         )
             return;
 
