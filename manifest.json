@@ -1,6 +1,6 @@
 {
   "name": "Killbind",
-  "version_number": "2.0.1",
+  "version_number": "2.0.2",
   "website_url": "https://github.com/baerchen201/LethalKillBindPlugin",
   "description": "Highly customizable mod that allows you to die at the press of a button (funny)",
   "dependencies": [
