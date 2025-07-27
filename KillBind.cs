@@ -14,7 +14,7 @@ using UnityEngine.InputSystem;
 
 namespace KillBind;
 
-public class KeyBindings : LcInputActions
+public class ModKeyBindings : LcInputActions
 {
     // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global
     [InputAction(KeyboardControl.K, Name = "Kill bind")]
@@ -29,13 +29,13 @@ public class KillBind : BaseUnityPlugin
     internal static new ManualLogSource Logger { get; private set; } = null!;
     internal static Harmony? Harmony { get; set; }
 
-    internal static readonly KeyBindings keyBindings = new();
+    private static readonly ModKeyBindings modKeyBindings = new();
 
-    private ConfigEntry<CauseOfDeath> _causeOfDeath = null!;
-    public CauseOfDeath causeOfDeath => _causeOfDeath.Value;
+    private ConfigEntry<CauseOfDeath>? causeOfDeath;
+    public CauseOfDeath CauseOfDeathValue => causeOfDeath?.Value ?? CauseOfDeath.Unknown;
 
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
-    public enum DeathAnimation
+    public enum DeathAnimationOptions
     {
         CauseOfDeath = -2,
         None = -1,
@@ -51,40 +51,41 @@ public class KillBind : BaseUnityPlugin
         Pieces,
     }
 
-    private ConfigEntry<DeathAnimation> _deathAnimation = null!;
-    public DeathAnimation? deathAnimation =>
-        _deathAnimation.Value switch
+    private ConfigEntry<DeathAnimationOptions>? deathAnimation;
+    public DeathAnimationOptions? DeathAnimationValue =>
+        deathAnimation?.Value switch
         {
-            DeathAnimation.CauseOfDeath => causeOfDeath switch
+            DeathAnimationOptions.CauseOfDeath => CauseOfDeathValue switch
             {
-                CauseOfDeath.Unknown => DeathAnimation.HeadBurst,
-                CauseOfDeath.Electrocution => DeathAnimation.Electrocuted,
-                CauseOfDeath.Burning => DeathAnimation.Burnt,
-                CauseOfDeath.Fan => DeathAnimation.HeadBurst,
-                CauseOfDeath.Snipped => DeathAnimation.Sliced,
-                _ => DeathAnimation.Normal,
+                CauseOfDeath.Unknown => DeathAnimationOptions.HeadBurst,
+                CauseOfDeath.Electrocution => DeathAnimationOptions.Electrocuted,
+                CauseOfDeath.Burning => DeathAnimationOptions.Burnt,
+                CauseOfDeath.Fan => DeathAnimationOptions.HeadBurst,
+                CauseOfDeath.Snipped => DeathAnimationOptions.Sliced,
+                _ => DeathAnimationOptions.Normal,
             },
-            DeathAnimation.None => null,
-            _ => _deathAnimation.Value,
+            DeathAnimationOptions.None => null,
+            _ => deathAnimation?.Value ?? DeathAnimationOptions.Normal,
         };
 
-    internal static Vector3 _BodyVelocity { get; set; } = default;
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global
+    internal static Vector3 BodyVelocity { get; set; } = default;
 
     private void Awake()
     {
         Logger = base.Logger;
         Instance = this;
 
-        _causeOfDeath = Config.Bind(
+        causeOfDeath = Config.Bind(
             "General",
             "CauseOfDeath",
             CauseOfDeath.Unknown,
             "What cause of death to display for your corpse"
         );
-        _deathAnimation = Config.Bind(
+        deathAnimation = Config.Bind(
             "General",
             "DeathAnimation",
-            DeathAnimation.CauseOfDeath,
+            DeathAnimationOptions.CauseOfDeath,
             "What ragdoll to spawn (CauseOfDeath chooses automatically based on cause of death)"
         );
 
@@ -93,7 +94,7 @@ public class KillBind : BaseUnityPlugin
         Harmony.PatchAll();
         Logger.LogDebug("Finished patching!");
 
-        keyBindings.KillKey.performed += KillBind_performed;
+        modKeyBindings.KillKey.performed += KillBind_performed;
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
     }
@@ -102,7 +103,7 @@ public class KillBind : BaseUnityPlugin
     {
         if (
             !ctx.performed
-            || GameNetworkManager.Instance.localPlayerController == null
+            || GameNetworkManager.Instance?.localPlayerController == null
             || GameNetworkManager.Instance.localPlayerController.isPlayerDead
             || GameNetworkManager.Instance.localPlayerController.isTypingChat
             || GameNetworkManager.Instance.localPlayerController.quickMenuManager.isMenuOpen
@@ -110,13 +111,13 @@ public class KillBind : BaseUnityPlugin
         )
             return;
 
-        var deathAnimation = Instance.deathAnimation;
+        var deathAnimation = Instance.DeathAnimationValue;
         GameNetworkManager.Instance.localPlayerController.KillPlayer(
-            _BodyVelocity,
+            BodyVelocity,
             deathAnimation != null,
-            Instance.causeOfDeath,
+            Instance.CauseOfDeathValue,
             Math.Clamp(
-                (int)(deathAnimation ?? DeathAnimation.Normal),
+                (int)(deathAnimation ?? DeathAnimationOptions.Normal),
                 0,
                 GameNetworkManager
                     .Instance
@@ -151,7 +152,7 @@ public class KillBind : BaseUnityPlugin
                     new CodeInstruction(OpCodes.Dup),
                     new CodeInstruction(
                         OpCodes.Call,
-                        AccessTools.PropertySetter(typeof(KillBind), nameof(_BodyVelocity))
+                        AccessTools.PropertySetter(typeof(KillBind), nameof(BodyVelocity))
                     )
                 )
                 .InstructionEnumeration();
