@@ -9,6 +9,7 @@ using GameNetcodeStuff;
 using HarmonyLib;
 using LethalCompanyInputUtils.Api;
 using LethalCompanyInputUtils.BindingPathEnums;
+using LethalModUtils;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -138,7 +139,6 @@ public class KillBind : BaseUnityPlugin
         ) =>
             new CodeMatcher(instructions)
                 .MatchForward(
-                    false,
                     new CodeMatch(
                         OpCodes.Callvirt,
                         AccessTools.Method(
@@ -147,7 +147,12 @@ public class KillBind : BaseUnityPlugin
                         )
                     )
                 )
-                .Advance(-2)
+                .MatchBack(
+                    new CodeMatch(
+                        OpCodes.Call,
+                        AccessTools.PropertyGetter(typeof(Time), nameof(Time.deltaTime))
+                    )
+                )
                 .Insert(
                     new CodeInstruction(OpCodes.Dup),
                     new CodeInstruction(
