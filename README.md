@@ -29,7 +29,7 @@ The ragdoll that is spawned is specified separately, but by default it follows t
 | Thumper                   | Mauling               | Normal                 |
 | Hygrodere                 | Unknown               | _Special_ (Normal)     |
 | Spore Lizard              | Mauling               | Normal                 |
-| Barber                    | Snipped               | Sliced                 |
+| Barber                    | Snipping              | Sliced                 |
 | Bracken                   | Strangulation         | Normal                 |
 | Bunker Spider             | Mauling               | _Special_ (Normal)     |
 | Ghost Girl                | Unknown               | HeadBurst              |
