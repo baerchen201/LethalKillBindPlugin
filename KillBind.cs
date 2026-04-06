@@ -50,6 +50,8 @@ public class KillBind : BaseUnityPlugin
         Sliced,
         HeadGone,
         Pieces,
+        Scratched,
+        Flowers,
     }
 
     private ConfigEntry<DeathAnimationOptions>? deathAnimation;
@@ -62,7 +64,8 @@ public class KillBind : BaseUnityPlugin
                 CauseOfDeath.Electrocution => DeathAnimationOptions.Electrocuted,
                 CauseOfDeath.Burning => DeathAnimationOptions.Burnt,
                 CauseOfDeath.Fan => DeathAnimationOptions.HeadBurst,
-                CauseOfDeath.Snipped => DeathAnimationOptions.Sliced,
+                CauseOfDeath.Snipping => DeathAnimationOptions.Sliced,
+                CauseOfDeath.Scratching => DeathAnimationOptions.Scratched,
                 _ => DeathAnimationOptions.Normal,
             },
             DeathAnimationOptions.None => null,

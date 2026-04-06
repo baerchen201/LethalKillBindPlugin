@@ -35,18 +35,19 @@ The ragdoll that is spawned is specified separately, but by default it follows t
 | Ghost Girl                | Unknown               | HeadBurst              |
 | Jester                    | Mauling               | Normal                 |
 | Maneater                  | Mauling               | Normal                 |
-| Kidnapper Fox _(Unused)_  | Mauling               | HeadGone               |
+| Cadaver Bloom             | Suffocation           | _Special_ (Normal)     |
 | Lasso Man _(Unused)_      | Strangulation         | Normal                 |
 
 #### Outside (Night):
 
-| Enemy                    | Causes of death              | Player ragdolls   |
-|--------------------------|------------------------------|-------------------|
-| Baboon Hawk              | Unknown                      | Normal            |
-| Earth Leviathan          | Unknown                      | None              |
-| Eyeless Dog              | Mauling                      | Normal            |
-| Forest Keeper            | Crushing                     | None              |
-| Old Bird                 | Crushing, Blast _or_ Burning | Normal _or_ Burnt |
+| Enemy           | Causes of death              | Player ragdolls   |
+|-----------------|------------------------------|-------------------|
+| Baboon Hawk     | Unknown                      | Normal            |
+| Earth Leviathan | Unknown                      | None              |
+| Eyeless Dog     | Mauling                      | Normal            |
+| Forest Keeper   | Crushing                     | None              |
+| Old Bird        | Crushing, Blast _or_ Burning | Normal _or_ Burnt |
+| Puma            | Scratching                   | Scratched         |
 
 #### Outside (Day):
 
@@ -54,6 +55,7 @@ The ragdoll that is spawned is specified separately, but by default it follows t
 |-----------------|------------------------------|-------------------|
 | Circuit Bees    | Electrocution                | Electrocuted      |
 | Giant Sapsucker | Stabbing                     | Pieces            |
+| Kidnapper Fox   | Mauling                      | HeadGone          |
 
 #### Other game elements:
 
