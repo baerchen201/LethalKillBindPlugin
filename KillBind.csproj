@@ -4,7 +4,7 @@
     <AssemblyName>baer1.KillBind</AssemblyName>
     <Product>KillBind</Product>
     <!-- Change to whatever version you're currently on. -->
-    <Version>2.0.4</Version>
+    <Version>2.0.5</Version>
   </PropertyGroup>
   <!-- Project Properties -->
   <PropertyGroup>
@@ -39,7 +39,11 @@
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" PrivateAssets="all" />
-    <PackageReference Include="LethalCompany.GameLibs.Steam" Version="81.0.0-ngd.0" PrivateAssets="all" />
+    <PackageReference
+      Include="LethalCompany.GameLibs.Steam"
+      Version="81.0.0-ngd.0"
+      PrivateAssets="all"
+    />
     <PackageReference
       Include="UnityEngine.Modules"
       Version="2022.3.62"
